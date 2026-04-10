@@ -461,40 +461,79 @@ function changeSheet() {
   renderRoster();
 }
 
+/* fetch with a per-request timeout */
+async function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(tid);
+    return res;
+  } catch(e) {
+    clearTimeout(tid);
+    throw e;
+  }
+}
+
 async function loadFromSheet() {
   if (!sheetUrl) return;
   const dot   = document.getElementById('sourceDot');
   const label = document.getElementById('sourceLabel');
   dot.className = 'source-dot spin';
-  label.innerHTML = 'Fetching from Google Sheet…';
   showSkeleton();
 
-  try {
-    const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(sheetUrl);
-    const res   = await fetch(proxy);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const csv   = await res.text();
+  /* ordered list of CORS proxies — tried one by one until one works */
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://cors.sh/?${u}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+  ];
 
-    const names = csv.split('\n')
-      .map(row => row.split(',')[0].replace(/^"|"$/g,'').trim())
-      .filter(cell => cell && !/^(name|employee|s\.no|no\.|sl)/i.test(cell));
+  let csv = null;
+  let lastErr = '';
 
-    if (!names.length) throw new Error('No names found in column A.');
-
-    sheetEmployees = names;
-    renderRoster();
-
-    const now = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
-    dot.className = 'source-dot green';
-    label.innerHTML = `<strong>${names.length} employees</strong> from Google Sheet &nbsp;·&nbsp; synced ${now}`;
-    showToast(names.length + ' employees loaded from sheet');
-  } catch(err) {
-    dot.className = 'source-dot red';
-    label.innerHTML = `<span style="color:#C0392B">Failed to load — check the URL or make sure the sheet is published.</span>`;
-    showToast('Failed to load sheet', true);
-    console.error(err);
-    renderRoster();
+  for (let i = 0; i < proxies.length; i++) {
+    const proxyUrl = proxies[i](sheetUrl);
+    label.innerHTML = `Trying proxy ${i + 1} of ${proxies.length}…`;
+    try {
+      const res = await fetchWithTimeout(proxyUrl, 8000); /* 8 s per proxy */
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      csv = await res.text();
+      break; /* success — stop trying */
+    } catch(e) {
+      lastErr = e.message;
+      console.warn(`Proxy ${i + 1} failed:`, e.message);
+    }
   }
+
+  if (!csv) {
+    dot.className = 'source-dot red';
+    label.innerHTML = `<span style="color:#C0392B">All proxies failed (${lastErr}). Check your internet connection or re-publish the sheet.</span>`;
+    showToast('Could not reach Google Sheet', true);
+    renderRoster();
+    return;
+  }
+
+  const names = csv.split('\n')
+    .map(row => row.split(',')[0].replace(/^"|"$/g, '').trim())
+    .filter(cell => cell && !/^(name|employee|s\.no|no\.|sl)/i.test(cell));
+
+  if (!names.length) {
+    dot.className = 'source-dot red';
+    label.innerHTML = `<span style="color:#C0392B">Sheet loaded but no names found in column A. Make sure names start from row 1.</span>`;
+    showToast('No names found in sheet', true);
+    renderRoster();
+    return;
+  }
+
+  sheetEmployees = names;
+  renderRoster();
+
+  const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  dot.className = 'source-dot green';
+  label.innerHTML = `<strong>${names.length} employees</strong> from Google Sheet &nbsp;·&nbsp; synced ${now}`;
+  showToast(names.length + ' employees loaded from sheet');
 }
 
 /* ── Manual add: Single ── */
