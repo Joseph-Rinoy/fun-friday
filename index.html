@@ -359,6 +359,7 @@ const PALETTES = [
 const TEAM_NAMES = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Echo','Team Foxtrot'];
 const SHEET_KEY  = 'qubiqon_sheetUrl';
 const LOCAL_KEY  = 'qubiqon_localEmps';
+const EXCLUDED_KEY = 'qubiqon_excludedEmps';
 
 /* State:
    - sheetEmployees  → loaded from Google Sheet (read-only display)
@@ -367,6 +368,7 @@ const LOCAL_KEY  = 'qubiqon_localEmps';
 */
 let sheetEmployees = [];
 let localEmployees = [];
+let excludedEmployees = [];
 let employees      = [];
 let numTeams       = 4;
 let sheetUrl       = '';
@@ -374,18 +376,25 @@ let sheetUrl       = '';
 /* ── Init ── */
 try { sheetUrl       = localStorage.getItem(SHEET_KEY)  || ''; } catch(e) {}
 try { localEmployees = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch(e) {}
+try { excludedEmployees = JSON.parse(localStorage.getItem(EXCLUDED_KEY) || '[]'); } catch(e) {}
 
 /* ── Helpers ── */
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function initials(n) { return n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 
 function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localEmployees)); } catch(e) {} }
+function saveExcluded() { try { localStorage.setItem(EXCLUDED_KEY, JSON.stringify(excludedEmployees)); } catch(e) {} }
 
 function mergeEmployees() {
   const seen = new Set();
+  const excluded = new Set(excludedEmployees.map(n => n.toLowerCase()));
   employees = [];
   [...sheetEmployees, ...localEmployees].forEach(n => {
-    if (!seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); employees.push(n); }
+    const low = n.toLowerCase();
+    if (!seen.has(low) && !excluded.has(low)) { 
+      seen.add(low); 
+      employees.push(n); 
+    }
   });
 }
 
@@ -414,9 +423,7 @@ function renderRoster() {
   grid.innerHTML = employees.map((name, i) => {
     const p = PALETTES[i % PALETTES.length];
     const fromSheet = sheetSet.has(name.toLowerCase());
-    const removeBtn = fromSheet
-      ? '' /* sheet names are managed in the sheet, not removable here */
-      : `<button class="emp-remove" onclick="removeLocal('${esc(name).replace(/'/g,"\\'")}')">×</button>`;
+    const removeBtn = `<button class="emp-remove" onclick="removeLocal('${esc(name).replace(/'/g,"\\'")}')">×</button>`;
     const badge = fromSheet
       ? `<span style="font-size:9px;background:${p.head};color:${p.text};padding:1px 5px;border-radius:8px;font-weight:600;margin-left:2px">sheet</span>`
       : '';
@@ -494,8 +501,7 @@ async function loadFromSheet() {
   let lastErr = '';
 
   for (let i = 0; i < proxies.length; i++) {
-    const cacheBustedUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
-    const proxyUrl = proxies[i](cacheBustedUrl);
+    const proxyUrl = proxies[i](sheetUrl);
     label.innerHTML = `Trying proxy ${i + 1} of ${proxies.length}…`;
     try {
       const res = await fetchWithTimeout(proxyUrl, 8000); /* 8 s per proxy */
@@ -643,21 +649,34 @@ function mergeIntoLocal(names) {
 
 /* ── Roster actions ── */
 function removeLocal(name) {
-  localEmployees = localEmployees.filter(n => n.toLowerCase() !== name.toLowerCase());
-  saveLocal();
+  const lowerName = name.toLowerCase();
+  
+  // If it's in the local list, remove it physically
+  if (localEmployees.some(n => n.toLowerCase() === lowerName)) {
+    localEmployees = localEmployees.filter(n => n.toLowerCase() !== lowerName);
+    saveLocal();
+  } else {
+    // If it's from the sheet, add it to the exclusion list
+    if (!excludedEmployees.some(n => n.toLowerCase() === lowerName)) {
+      excludedEmployees.push(name);
+      saveExcluded();
+    }
+  }
   renderRoster();
 }
 
 function clearAll() {
-  if (!employees.length) return;
+  if (!employees.length && !excludedEmployees.length) return;
   const msg = sheetEmployees.length
-    ? `This will remove ${localEmployees.length} manually-added employee(s). Sheet employees will remain. Continue?`
-    : `Remove all ${localEmployees.length} employees?`;
+    ? `This will remove manual additions and reset all excluded employees from the sheet. Continue?`
+    : `Remove all employees?`;
   if (!confirm(msg)) return;
   localEmployees = [];
+  excludedEmployees = [];
   saveLocal();
+  saveExcluded();
   renderRoster();
-  showToast('Manual entries cleared');
+  showToast('Roster reset');
 }
 
 /* ── Shuffle (Fisher-Yates) ── */
