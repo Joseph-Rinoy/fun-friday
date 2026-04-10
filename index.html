@@ -494,7 +494,8 @@ async function loadFromSheet() {
   let lastErr = '';
 
   for (let i = 0; i < proxies.length; i++) {
-    const proxyUrl = proxies[i](sheetUrl);
+    const cacheBustedUrl = sheetUrl + (sheetUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+    const proxyUrl = proxies[i](cacheBustedUrl);
     label.innerHTML = `Trying proxy ${i + 1} of ${proxies.length}…`;
     try {
       const res = await fetchWithTimeout(proxyUrl, 8000); /* 8 s per proxy */
