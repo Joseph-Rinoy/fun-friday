@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Friday Team Randomizer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #E2DDD5;
+    --text: #1A1714;
+    --text2: #6B6560;
+    --text3: #A09A94;
+    --accent: #2D5A3D;
+    --accent-light: #E8F0EB;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+  .wrapper { width: 100%; max-width: 700px; }
+
+  header { margin-bottom: 2rem; }
+  header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+  header h1 span { color: var(--accent); }
+  header p { font-size: 14px; color: var(--text2); margin-top: 4px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 1.1rem;
+  }
+
+  .mini-tabs {
+    display: flex; gap: 0; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 1.1rem; width: fit-content;
+  }
+  .mini-tab {
+    padding: 7px 16px; font-size: 13px; font-weight: 500; background: var(--surface2);
+    color: var(--text2); cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mini-tab:not(:last-child) { border-right: 1px solid var(--border); }
+  .mini-tab.active { background: var(--accent); color: #fff; }
+  .mini-tab:hover:not(.active) { background: var(--border); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .add-row { display: flex; gap: 8px; }
+  input[type="text"] {
+    flex: 1; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+    font-size: 14px; background: var(--bg); color: var(--text); outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"].error { border-color: #C0392B; }
+  input[type="text"]::placeholder { color: var(--text3); }
+
+  button { font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; border-radius: var(--radius-sm); transition: all 0.15s; font-size: 14px; font-weight: 500; }
+  .btn-primary { padding: 10px 18px; background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #234a31; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary { padding: 9px 14px; background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+
+  .paste-hint { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  textarea {
+    width: 100%; height: 130px; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: 'DM Mono', monospace; font-size: 13px;
+    background: var(--bg); color: var(--text); resize: vertical; outline: none;
+    transition: border-color 0.15s; line-height: 1.6;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--text3); font-family: 'DM Sans', sans-serif; }
+  .paste-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .paste-preview { font-size: 12px; color: var(--text3); margin-left: auto; font-family: 'DM Mono', monospace; }
+
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 2rem 1rem; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s; position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: var(--accent-light); }
+  .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 28px; margin-bottom: 8px; }
+  .drop-label { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .drop-sub { font-size: 12px; color: var(--text3); }
+  .drop-sub span { color: var(--accent); font-weight: 500; }
+  .file-status { margin-top: 10px; font-size: 13px; font-weight: 500; min-height: 18px; }
+
+  .roster-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .count-badge { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .btn-clear-all { padding: 5px 12px; background: none; border: 1px solid var(--border); color: var(--text3); font-size: 12px; border-radius: 20px; }
+  .btn-clear-all:hover { border-color: #C0392B; color: #C0392B; }
+
+  .emp-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .emp-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 8px 5px 6px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 30px;
+    font-size: 13px; color: var(--text); animation: popIn 0.15s ease;
+  }
+  @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .emp-avatar {
+    width: 22px; height: 22px; border-radius: 50%; font-size: 10px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .emp-remove {
+    background: none; border: none; color: var(--text3); font-size: 16px; line-height: 1;
+    padding: 0; width: 18px; height: 18px; display: flex; align-items: center;
+    justify-content: center; border-radius: 50%; transition: background 0.1s, color 0.1s; cursor: pointer;
+  }
+  .emp-remove:hover { background: #E8D5D5; color: #C0392B; }
+  .empty-hint { font-size: 13px; color: var(--text3); font-style: italic; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--bg); padding: 10px 20px;
+    border-radius: 30px; font-size: 13px; font-weight: 500;
+    opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 99; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { background: #C0392B; }
+
+  .controls-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem; }
+  .controls-row label { font-size: 13px; color: var(--text2); white-space: nowrap; }
+  .num-btns { display: flex; gap: 5px; }
+  .num-btn {
+    width: 38px; height: 38px; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); font-size: 14px; font-weight: 500; border-radius: var(--radius-sm);
+  }
+  .num-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .num-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-shuffle { margin-left: auto; padding: 10px 28px; background: var(--text); color: var(--bg); font-size: 15px; border-radius: var(--radius-sm); }
+  .btn-shuffle:hover { background: #2e2a26; }
+  .btn-shuffle:active { transform: scale(0.97); }
+
+  .warning-box { background: #FDF3F2; border: 1px solid #F5C6C2; color: #8B1A14; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; }
+  .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .team-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; animation: popIn 0.2s ease; }
+  .team-head { padding: 10px 14px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+  .team-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .team-count { font-weight: 400; font-size: 12px; margin-left: auto; font-family: 'DM Mono', monospace; }
+  .team-members { padding: 10px 14px 14px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--border); }
+  .member-pill { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .shuffle-hint { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
+
+  footer { margin-top: 1.5rem; font-size: 12px; color: var(--text3); text-align: center; }
+
+  @media (max-width: 500px) {
+    header h1 { font-size: 22px; }
+    .btn-shuffle { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <h1>Friday <span>Team</span> Randomizer</h1>
+    <p>Split employees into random groups for activities</p>
+  </header>
+
+  <!-- Add Employees -->
+  <div class="card">
+    <div class="card-title">Add employees</div>
+    <div class="mini-tabs">
+      <button class="mini-tab active" onclick="switchTab('single')">Single</button>
+      <button class="mini-tab" onclick="switchTab('paste')">Paste list</button>
+      <button class="mini-tab" onclick="switchTab('file')">Upload file</button>
+    </div>
+
+    <!-- Single -->
+    <div class="tab-panel active" id="panel-single">
+      <div class="add-row">
+        <input type="text" id="nameInput" placeholder="Enter employee name…" maxlength="50"
+               onkeydown="if(event.key==='Enter') addSingle()" />
+        <button class="btn-primary" onclick="addSingle()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Paste -->
+    <div class="tab-panel" id="panel-paste">
+      <p class="paste-hint">Paste names separated by new lines, commas, or semicolons.</p>
+      <textarea id="pasteArea" placeholder="John Smith&#10;Jane Doe&#10;Ravi Kumar&#10;…" oninput="updatePasteCount()"></textarea>
+      <div class="paste-actions">
+        <button class="btn-primary" onclick="importPaste()">Import names</button>
+        <button class="btn-secondary" onclick="document.getElementById('pasteArea').value='';updatePasteCount()">Clear</button>
+        <span class="paste-preview" id="pasteCount"></span>
+      </div>
+    </div>
+
+    <!-- File -->
+    <div class="tab-panel" id="panel-file">
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls" onchange="handleFile(this.files[0])" />
+        <div class="drop-icon">📂</div>
+        <div class="drop-label">Drop a file here or click to browse</div>
+        <div class="drop-sub">Supports <span>.txt</span>, <span>.csv</span>, <span>.xlsx</span> — one name per row or comma-separated</div>
+        <div class="file-status" id="fileStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Roster -->
+  <div class="card">
+    <div class="roster-header">
+      <div class="card-title" style="margin-bottom:0">Employee roster</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="count-badge" id="countBadge">0 employees</span>
+        <button class="btn-clear-all" onclick="clearAll()">Clear all</button>
+      </div>
+    </div>
+    <div class="emp-grid" id="empGrid">
+      <span class="empty-hint">No employees yet — add some above!</span>
+    </div>
+  </div>
+
+  <!-- Shuffle -->
+  <div class="card">
+    <div class="card-title">Shuffle into teams</div>
+    <div class="controls-row">
+      <label>Number of teams:</label>
+      <div class="num-btns">
+        <button class="num-btn" onclick="setNum(2)">2</button>
+        <button class="num-btn" onclick="setNum(3)">3</button>
+        <button class="num-btn active" onclick="setNum(4)">4</button>
+        <button class="num-btn" onclick="setNum(5)">5</button>
+        <button class="num-btn" onclick="setNum(6)">6</button>
+      </div>
+      <button class="btn-shuffle" onclick="doShuffle()">Shuffle ↻</button>
+    </div>
+    <div id="shuffleOut">
+      <div class="shuffle-hint">Add employees above, then hit Shuffle.</div>
+    </div>
+  </div>
+
+  <footer>Names saved in your browser automatically &nbsp;·&nbsp; No internet required after first load</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PALETTES = [
+  { bg:'#EEF6F1', head:'#C8E6D0', dot:'#2D6A4F', text:'#1B4332', pill:'#D8EFDF', pillText:'#1B4332' },
+  { bg:'#EEF2FB', head:'#C8D8F6', dot:'#2952A3', text:'#1A2F6E', pill:'#D8E5F8', pillText:'#1A2F6E' },
+  { bg:'#FBF3EE', head:'#F6D8C0', dot:'#A0522D', text:'#6B3319', pill:'#F8E3D0', pillText:'#6B3319' },
+  { bg:'#F8EEF8', head:'#EEC8EE', dot:'#7B2D8B', text:'#4A1A5E', pill:'#F3D8F5', pillText:'#4A1A5E' },
+  { bg:'#F8F3EE', head:'#EDD8B8', dot:'#9B7428', text:'#5C4010', pill:'#F2E3C8', pillText:'#5C4010' },
+  { bg:'#EEF8F8', head:'#C0E8E8', dot:'#1A7A7A', text:'#0D4A4A', pill:'#D0F0F0', pillText:'#0D4A4A' },
+];
+const TEAM_NAMES = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Echo','Team Foxtrot'];
+
+let employees = [];
+let numTeams = 4;
+
+try { const s = localStorage.getItem('fridayRand_v3'); if (s) employees = JSON.parse(s); } catch(e) {}
+
+function save() { try { localStorage.setItem('fridayRand_v3', JSON.stringify(employees)); } catch(e) {} }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function initials(n) { return n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+
+function showToast(msg, isErr) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
+}
+
+function renderRoster() {
+  const grid = document.getElementById('empGrid');
+  document.getElementById('countBadge').textContent = employees.length + ' employee' + (employees.length !== 1 ? 's' : '');
+  if (!employees.length) {
+    grid.innerHTML = '<span class="empty-hint">No employees yet — add some above!</span>';
+    return;
+  }
+  grid.innerHTML = employees.map((name, i) => {
+    const p = PALETTES[i % PALETTES.length];
+    return `<div class="emp-chip">
+      <div class="emp-avatar" style="background:${p.head};color:${p.text}">${initials(name)}</div>
+      ${esc(name)}
+      <button class="emp-remove" onclick="removeEmp(${i})">×</button>
+    </div>`;
+  }).join('');
+}
+
+function mergeNames(names) {
+  const existing = new Set(employees.map(e => e.toLowerCase()));
+  let added = 0, dupes = 0;
+  names.forEach(raw => {
+    const name = raw.trim().replace(/\s+/g, ' ');
+    if (!name) return;
+    if (existing.has(name.toLowerCase())) { dupes++; return; }
+    employees.push(name);
+    existing.add(name.toLowerCase());
+    added++;
+  });
+  save();
+  renderRoster();
+  return { added, dupes };
+}
+
+/* ── Single ── */
+function addSingle() {
+  const inp = document.getElementById('nameInput');
+  const name = inp.value.trim().replace(/\s+/g,' ');
+  if (!name) { inp.focus(); return; }
+  const { added, dupes } = mergeNames([name]);
+  if (dupes) {
+    inp.classList.add('error');
+    setTimeout(() => inp.classList.remove('error'), 1200);
+    showToast('Name already exists!', true);
+  } else {
+    inp.value = '';
+    inp.focus();
+    showToast('Added ' + name);
+  }
+}
+
+/* ── Paste ── */
+function updatePasteCount() {
+  const val = document.getElementById('pasteArea').value.trim();
+  const el = document.getElementById('pasteCount');
+  if (!val) { el.textContent = ''; return; }
+  const n = val.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean).length;
+  el.textContent = n + ' name' + (n !== 1 ? 's' : '') + ' detected';
+}
+
+function importPaste() {
+  const val = document.getElementById('pasteArea').value.trim();
+  if (!val) { showToast('Nothing to import!', true); return; }
+  const names = val.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+  const { added, dupes } = mergeNames(names);
+  let msg = added + ' name' + (added !== 1 ? 's' : '') + ' added';
+  if (dupes) msg += ', ' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped';
+  showToast(msg, added === 0);
+  if (added) { document.getElementById('pasteArea').value = ''; updatePasteCount(); }
+}
+
+/* ── File upload ── */
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+function handleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const status = document.getElementById('fileStatus');
+  status.style.color = 'var(--text3)';
+  status.textContent = 'Reading ' + file.name + '…';
+
+  if (ext === 'xlsx' || ext === 'xls') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const names = rows.flat().map(c => String(c || '').trim()).filter(Boolean);
+        finishFile(names, file.name, status);
+      } catch { status.textContent = 'Could not read Excel file.'; status.style.color = '#C0392B'; }
+    };
+    reader.readAsArrayBuffer(file);
+  } else if (ext === 'csv' || ext === 'txt') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const names = e.target.result.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
+      finishFile(names, file.name, status);
+    };
+    reader.readAsText(file);
+  } else {
+    status.textContent = 'Unsupported format. Use .txt, .csv, or .xlsx';
+    status.style.color = '#C0392B';
+  }
+  document.getElementById('fileInput').value = '';
+}
+
+function finishFile(names, filename, statusEl) {
+  const { added, dupes } = mergeNames(names);
+  let msg = added + ' name' + (added !== 1 ? 's' : '') + ' imported from ' + filename;
+  if (dupes) msg += ' (' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped)';
+  statusEl.textContent = msg;
+  statusEl.style.color = added ? 'var(--accent)' : '#C0392B';
+  showToast(msg, added === 0);
+}
+
+/* ── Roster ── */
+function removeEmp(i) { employees.splice(i, 1); save(); renderRoster(); }
+function clearAll() {
+  if (!employees.length) return;
+  if (confirm('Remove all ' + employees.length + ' employees from the roster?')) {
+    employees = []; save(); renderRoster(); showToast('Roster cleared');
+  }
+}
+
+/* ── Shuffle ── */
+function setNum(n) {
+  numTeams = n;
+  document.querySelectorAll('.num-btn').forEach(b => b.classList.toggle('active', +b.textContent === n));
+}
+
+function fisherYatesShuffle(arr) {
+  const a = [...arr]; // copy to avoid mutating original
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1)); // 0 ≤ j ≤ i
+    [a[i], a[j]] = [a[j], a[i]]; // swap
+  }
+  return a;
+}
+
+function doShuffle() {
+  const out = document.getElementById('shuffleOut');
+  if (!employees.length) { out.innerHTML = '<div class="warning-box">Add employees first.</div>'; return; }
+  if (employees.length < numTeams) {
+    out.innerHTML = `<div class="warning-box">You have ${employees.length} employee${employees.length > 1 ? 's' : ''} but want ${numTeams} teams. Add more employees or reduce teams.</div>`;
+    return;
+  }
+  
+  const shuffled = fisherYatesShuffle(employees);
+  const teams = Array.from({ length: numTeams }, () => []);
+  shuffled.forEach((name, i) => teams[i % numTeams].push(name));
+  out.innerHTML = `<div class="teams-grid">${teams.map((members, i) => {
+    const p = PALETTES[i % PALETTES.length];
+    return `<div class="team-card">
+      <div class="team-head" style="background:${p.head};color:${p.text}">
+        <div class="team-dot" style="background:${p.dot}"></div>
+        ${TEAM_NAMES[i]}
+        <span class="team-count" style="color:${p.dot}">${members.length} members</span>
+      </div>
+      <div class="team-members">${members.map(m => `<span class="member-pill" style="background:${p.pill};color:${p.pillText}">${esc(m)}</span>`).join('')}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+/* ── Tabs ── */
+function switchTab(tab) {
+  document.querySelectorAll('.mini-tab').forEach((t, i) => t.classList.toggle('active', ['single','paste','file'][i] === tab));
+  document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', ['panel-single','panel-paste','panel-file'][i] === 'panel-' + tab));
+}
+
+renderRoster();
+</script>
+</body>
+</html>
