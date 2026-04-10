@@ -6,8 +6,8 @@
 <title>Qubiqon Team Randomizer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <link rel="icon" href="https://www.qubiqon.io/wp-content/uploads/2025/06/cropped-Qubiqon_White_Logo_Black_Background-1-32x32.png" sizes="32x32">
-<link rel="apple-touch-icon" href="https://www.qubiqon. io/wp-content/uploads/2025/06/cropped-Qubiqon_White_Logo_Black_Background-1-180x180. png">
-<link rel="icon" href="https://www.qubiqon.io/wp-content/uploads/2025/06/cropped-Qubiqon_White_Logo_Black_Background-1-192x192. png" sizes="192x192">
+<link rel="apple-touch-icon" href="https://www.qubiqon.io/wp-content/uploads/2025/06/cropped-Qubiqon_White_Logo_Black_Background-1-180x180.png">
+<link rel="icon" href="https://www.qubiqon.io/wp-content/uploads/2025/06/cropped-Qubiqon_White_Logo_Black_Background-1-192x192.png" sizes="192x192">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -53,6 +53,53 @@
     text-transform: uppercase; color: var(--text3); margin-bottom: 1.1rem;
   }
 
+  /* ── Setup banner ── */
+  .setup-banner {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .setup-banner h2 { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 6px; }
+  .setup-steps { margin: 8px 0 12px; padding-left: 1.2rem; }
+  .setup-steps li { font-size: 13px; color: #78350F; margin-bottom: 5px; line-height: 1.5; }
+  .setup-steps code { font-family: 'DM Mono', monospace; font-size: 12px; background: #FEF3C7; padding: 1px 5px; border-radius: 4px; color: #92400E; }
+  .url-row { display: flex; gap: 8px; }
+  .url-row input {
+    flex: 1; padding: 9px 12px; border: 1px solid #FCD34D;
+    border-radius: var(--radius-sm); font-size: 13px; font-family: 'DM Mono', monospace;
+    background: #FFFDF5; color: var(--text); outline: none; transition: border-color 0.15s;
+  }
+  .url-row input:focus { border-color: #F59E0B; }
+  .url-row input::placeholder { color: var(--text3); font-family: 'DM Sans', sans-serif; font-size: 13px; }
+  .btn-amber { padding: 9px 18px; background: #D97706; color: #fff; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .btn-amber:hover { background: #B45309; }
+  .btn-amber:active { transform: scale(0.97); }
+
+  /* ── Source bar ── */
+  .source-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    margin-bottom: 1rem; font-size: 13px;
+  }
+  .source-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--text3); }
+  .source-dot.green { background: #16A34A; }
+  .source-dot.red { background: #C0392B; }
+  .source-dot.spin {
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; width: 10px; height: 10px; background: none;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .source-label { color: var(--text2); flex: 1; }
+  .source-label strong { color: var(--text); font-weight: 500; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; background: none; border: 1px solid var(--border); color: var(--text2); border-radius: 20px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.15s; }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm.danger:hover { border-color: #C0392B; color: #C0392B; }
+
+  /* ── Add employees tabs ── */
   .mini-tabs {
     display: flex; gap: 0; border: 1px solid var(--border);
     border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 1.1rem; width: fit-content;
@@ -113,9 +160,10 @@
   .drop-sub span { color: var(--accent); font-weight: 500; }
   .file-status { margin-top: 10px; font-size: 13px; font-weight: 500; min-height: 18px; }
 
+  /* ── Roster ── */
   .roster-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .count-badge { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
-  .btn-clear-all { padding: 5px 12px; background: none; border: 1px solid var(--border); color: var(--text3); font-size: 12px; border-radius: 20px; }
+  .btn-clear-all { padding: 5px 12px; background: none; border: 1px solid var(--border); color: var(--text3); font-size: 12px; border-radius: 20px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.15s; }
   .btn-clear-all:hover { border-color: #C0392B; color: #C0392B; }
 
   .emp-grid { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -138,6 +186,11 @@
   .emp-remove:hover { background: #E8D5D5; color: #C0392B; }
   .empty-hint { font-size: 13px; color: var(--text3); font-style: italic; }
 
+  .skeleton { display: flex; flex-wrap: wrap; gap: 7px; }
+  .skel-chip { height: 32px; border-radius: 30px; background: var(--surface2); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ── Toast ── */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--text); color: var(--bg); padding: 10px 20px;
@@ -147,6 +200,7 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.err { background: #C0392B; }
 
+  /* ── Shuffle ── */
   .controls-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem; }
   .controls-row label { font-size: 13px; color: var(--text2); white-space: nowrap; }
   .num-btns { display: flex; gap: 5px; }
@@ -170,11 +224,12 @@
   .member-pill { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
   .shuffle-hint { font-size: 13px; color: var(--text3); font-style: italic; text-align: center; padding: 1.5rem 0; }
 
-  footer { margin-top: 1.5rem; font-size: 12px; color: var(--text3); text-align: center; }
+  footer { margin-top: 1.5rem; font-size: 12px; color: var(--text3); text-align: center; line-height: 1.8; }
 
   @media (max-width: 500px) {
     header h1 { font-size: 22px; }
     .btn-shuffle { width: 100%; }
+    .url-row { flex-direction: column; }
   }
 </style>
 </head>
@@ -186,7 +241,31 @@
     <p>Split employees into random groups for activities</p>
   </header>
 
-  <!-- Add Employees -->
+  <!-- ── Google Sheet setup banner (shown until URL saved) ── -->
+  <div class="setup-banner" id="setupBanner">
+    <h2>⚙️ One-time setup — connect your Google Sheet</h2>
+    <ol class="setup-steps">
+      <li>Create a Google Sheet with employee names in <code>Column A</code>, one name per row (no header needed).</li>
+      <li>Click <strong>File → Share → Publish to web</strong>.</li>
+      <li>Choose your sheet name and select <code>Comma-separated values (.csv)</code>, then click <strong>Publish</strong>.</li>
+      <li>Copy the URL and paste it below.</li>
+    </ol>
+    <div class="url-row">
+      <input type="text" id="sheetUrlInput"
+        placeholder="https://docs.google.com/spreadsheets/d/…/pub?output=csv" />
+      <button class="btn-amber" onclick="saveSheetUrl()">Connect sheet</button>
+    </div>
+  </div>
+
+  <!-- ── Source status bar (shown after URL saved) ── -->
+  <div class="source-bar" id="sourceBar" style="display:none">
+    <div class="source-dot" id="sourceDot"></div>
+    <span class="source-label" id="sourceLabel">Not loaded yet</span>
+    <button class="btn-sm" onclick="loadFromSheet()">↻ Refresh</button>
+    <button class="btn-sm danger" onclick="changeSheet()">Change sheet</button>
+  </div>
+
+  <!-- ── Add Employees ── -->
   <div class="card">
     <div class="card-title">Add employees</div>
     <div class="mini-tabs">
@@ -227,7 +306,7 @@
     </div>
   </div>
 
-  <!-- Roster -->
+  <!-- ── Roster ── -->
   <div class="card">
     <div class="roster-header">
       <div class="card-title" style="margin-bottom:0">Employee roster</div>
@@ -237,11 +316,11 @@
       </div>
     </div>
     <div class="emp-grid" id="empGrid">
-      <span class="empty-hint">No employees yet — add some above!</span>
+      <span class="empty-hint">No employees yet — add some above or connect your Google Sheet.</span>
     </div>
   </div>
 
-  <!-- Shuffle -->
+  <!-- ── Shuffle ── -->
   <div class="card">
     <div class="card-title">Shuffle into teams</div>
     <div class="controls-row">
@@ -260,7 +339,10 @@
     </div>
   </div>
 
-  <footer>Names saved in your browser automatically &nbsp;·&nbsp; No internet required after first load</footer>
+  <footer>
+    Employees loaded from Google Sheet · Manual additions saved in your browser<br>
+    To update the master list, edit the sheet and hit <strong>↻ Refresh</strong>
+  </footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -275,15 +357,37 @@ const PALETTES = [
   { bg:'#EEF8F8', head:'#C0E8E8', dot:'#1A7A7A', text:'#0D4A4A', pill:'#D0F0F0', pillText:'#0D4A4A' },
 ];
 const TEAM_NAMES = ['Team Alpha','Team Beta','Team Gamma','Team Delta','Team Echo','Team Foxtrot'];
+const SHEET_KEY  = 'qubiqon_sheetUrl';
+const LOCAL_KEY  = 'qubiqon_localEmps';
 
-let employees = [];
-let numTeams = 4;
+/* State:
+   - sheetEmployees  → loaded from Google Sheet (read-only display)
+   - localEmployees  → added manually via Single / Paste / File
+   - employees       → merged union used for shuffling & rendering
+*/
+let sheetEmployees = [];
+let localEmployees = [];
+let employees      = [];
+let numTeams       = 4;
+let sheetUrl       = '';
 
-try { const s = localStorage.getItem('fridayRand_v3'); if (s) employees = JSON.parse(s); } catch(e) {}
+/* ── Init ── */
+try { sheetUrl       = localStorage.getItem(SHEET_KEY)  || ''; } catch(e) {}
+try { localEmployees = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch(e) {}
 
-function save() { try { localStorage.setItem('fridayRand_v3', JSON.stringify(employees)); } catch(e) {} }
+/* ── Helpers ── */
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function initials(n) { return n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+
+function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localEmployees)); } catch(e) {} }
+
+function mergeEmployees() {
+  const seen = new Set();
+  employees = [];
+  [...sheetEmployees, ...localEmployees].forEach(n => {
+    if (!seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); employees.push(n); }
+  });
+}
 
 function showToast(msg, isErr) {
   const el = document.getElementById('toast');
@@ -293,45 +397,112 @@ function showToast(msg, isErr) {
   el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
 }
 
+/* ── Roster render ── */
 function renderRoster() {
+  mergeEmployees();
   const grid = document.getElementById('empGrid');
-  document.getElementById('countBadge').textContent = employees.length + ' employee' + (employees.length !== 1 ? 's' : '');
+  document.getElementById('countBadge').textContent =
+    employees.length + ' employee' + (employees.length !== 1 ? 's' : '');
+
   if (!employees.length) {
-    grid.innerHTML = '<span class="empty-hint">No employees yet — add some above!</span>';
+    grid.innerHTML = '<span class="empty-hint">No employees yet — add some above or connect your Google Sheet.</span>';
     return;
   }
+
+  const sheetSet = new Set(sheetEmployees.map(n => n.toLowerCase()));
+
   grid.innerHTML = employees.map((name, i) => {
     const p = PALETTES[i % PALETTES.length];
+    const fromSheet = sheetSet.has(name.toLowerCase());
+    const removeBtn = fromSheet
+      ? '' /* sheet names are managed in the sheet, not removable here */
+      : `<button class="emp-remove" onclick="removeLocal('${esc(name).replace(/'/g,"\\'")}')">×</button>`;
+    const badge = fromSheet
+      ? `<span style="font-size:9px;background:${p.head};color:${p.text};padding:1px 5px;border-radius:8px;font-weight:600;margin-left:2px">sheet</span>`
+      : '';
     return `<div class="emp-chip">
       <div class="emp-avatar" style="background:${p.head};color:${p.text}">${initials(name)}</div>
-      ${esc(name)}
-      <button class="emp-remove" onclick="removeEmp(${i})">×</button>
+      ${esc(name)}${badge}${removeBtn}
     </div>`;
   }).join('');
 }
 
-function mergeNames(names) {
-  const existing = new Set(employees.map(e => e.toLowerCase()));
-  let added = 0, dupes = 0;
-  names.forEach(raw => {
-    const name = raw.trim().replace(/\s+/g, ' ');
-    if (!name) return;
-    if (existing.has(name.toLowerCase())) { dupes++; return; }
-    employees.push(name);
-    existing.add(name.toLowerCase());
-    added++;
-  });
-  save();
-  renderRoster();
-  return { added, dupes };
+function showSkeleton() {
+  const widths = [72,90,80,64,96,76,88,70,82,94,68,78];
+  document.getElementById('empGrid').innerHTML =
+    `<div class="skeleton">${widths.map(w=>`<div class="skel-chip" style="width:${w}px"></div>`).join('')}</div>`;
+  document.getElementById('countBadge').textContent = 'loading…';
 }
 
-/* ── Single ── */
+/* ── Google Sheet ── */
+function saveSheetUrl() {
+  const raw = document.getElementById('sheetUrlInput').value.trim();
+  if (!raw) { showToast('Please paste your Google Sheet CSV URL.', true); return; }
+  if (!raw.includes('docs.google.com') || !raw.includes('pub')) {
+    showToast("That doesn't look like a published Google Sheet URL.", true); return;
+  }
+  sheetUrl = raw.includes('output=csv') ? raw : raw.split('?')[0] + '?output=csv';
+  try { localStorage.setItem(SHEET_KEY, sheetUrl); } catch(e) {}
+  document.getElementById('setupBanner').style.display = 'none';
+  document.getElementById('sourceBar').style.display   = 'flex';
+  loadFromSheet();
+}
+
+function changeSheet() {
+  if (!confirm('Disconnect the current sheet?')) return;
+  sheetUrl = '';
+  sheetEmployees = [];
+  try { localStorage.removeItem(SHEET_KEY); } catch(e) {}
+  document.getElementById('setupBanner').style.display = 'block';
+  document.getElementById('sourceBar').style.display   = 'none';
+  document.getElementById('sheetUrlInput').value = '';
+  document.getElementById('sourceDot').className = 'source-dot';
+  document.getElementById('sourceLabel').textContent   = 'Not connected';
+  renderRoster();
+}
+
+async function loadFromSheet() {
+  if (!sheetUrl) return;
+  const dot   = document.getElementById('sourceDot');
+  const label = document.getElementById('sourceLabel');
+  dot.className = 'source-dot spin';
+  label.innerHTML = 'Fetching from Google Sheet…';
+  showSkeleton();
+
+  try {
+    const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(sheetUrl);
+    const res   = await fetch(proxy);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const csv   = await res.text();
+
+    const names = csv.split('\n')
+      .map(row => row.split(',')[0].replace(/^"|"$/g,'').trim())
+      .filter(cell => cell && !/^(name|employee|s\.no|no\.|sl)/i.test(cell));
+
+    if (!names.length) throw new Error('No names found in column A.');
+
+    sheetEmployees = names;
+    renderRoster();
+
+    const now = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    dot.className = 'source-dot green';
+    label.innerHTML = `<strong>${names.length} employees</strong> from Google Sheet &nbsp;·&nbsp; synced ${now}`;
+    showToast(names.length + ' employees loaded from sheet');
+  } catch(err) {
+    dot.className = 'source-dot red';
+    label.innerHTML = `<span style="color:#C0392B">Failed to load — check the URL or make sure the sheet is published.</span>`;
+    showToast('Failed to load sheet', true);
+    console.error(err);
+    renderRoster();
+  }
+}
+
+/* ── Manual add: Single ── */
 function addSingle() {
-  const inp = document.getElementById('nameInput');
+  const inp  = document.getElementById('nameInput');
   const name = inp.value.trim().replace(/\s+/g,' ');
   if (!name) { inp.focus(); return; }
-  const { added, dupes } = mergeNames([name]);
+  const { added, dupes } = mergeIntoLocal([name]);
   if (dupes) {
     inp.classList.add('error');
     setTimeout(() => inp.classList.remove('error'), 1200);
@@ -343,10 +514,10 @@ function addSingle() {
   }
 }
 
-/* ── Paste ── */
+/* ── Manual add: Paste ── */
 function updatePasteCount() {
   const val = document.getElementById('pasteArea').value.trim();
-  const el = document.getElementById('pasteCount');
+  const el  = document.getElementById('pasteCount');
   if (!val) { el.textContent = ''; return; }
   const n = val.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean).length;
   el.textContent = n + ' name' + (n !== 1 ? 's' : '') + ' detected';
@@ -356,22 +527,25 @@ function importPaste() {
   const val = document.getElementById('pasteArea').value.trim();
   if (!val) { showToast('Nothing to import!', true); return; }
   const names = val.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
-  const { added, dupes } = mergeNames(names);
+  const { added, dupes } = mergeIntoLocal(names);
   let msg = added + ' name' + (added !== 1 ? 's' : '') + ' added';
   if (dupes) msg += ', ' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped';
   showToast(msg, added === 0);
   if (added) { document.getElementById('pasteArea').value = ''; updatePasteCount(); }
 }
 
-/* ── File upload ── */
+/* ── Manual add: File ── */
 const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
 
 function handleFile(file) {
   if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
+  const ext    = file.name.split('.').pop().toLowerCase();
   const status = document.getElementById('fileStatus');
   status.style.color = 'var(--text3)';
   status.textContent = 'Reading ' + file.name + '…';
@@ -380,19 +554,17 @@ function handleFile(file) {
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        const names = rows.flat().map(c => String(c || '').trim()).filter(Boolean);
-        finishFile(names, file.name, status);
+        const wb   = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+        const ws   = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1 });
+        finishFile(rows.flat().map(c=>String(c||'').trim()).filter(Boolean), file.name, status);
       } catch { status.textContent = 'Could not read Excel file.'; status.style.color = '#C0392B'; }
     };
     reader.readAsArrayBuffer(file);
   } else if (ext === 'csv' || ext === 'txt') {
     const reader = new FileReader();
     reader.onload = e => {
-      const names = e.target.result.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean);
-      finishFile(names, file.name, status);
+      finishFile(e.target.result.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean), file.name, status);
     };
     reader.readAsText(file);
   } else {
@@ -403,7 +575,7 @@ function handleFile(file) {
 }
 
 function finishFile(names, filename, statusEl) {
-  const { added, dupes } = mergeNames(names);
+  const { added, dupes } = mergeIntoLocal(names);
   let msg = added + ' name' + (added !== 1 ? 's' : '') + ' imported from ' + filename;
   if (dupes) msg += ' (' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped)';
   statusEl.textContent = msg;
@@ -411,41 +583,70 @@ function finishFile(names, filename, statusEl) {
   showToast(msg, added === 0);
 }
 
-/* ── Roster ── */
-function removeEmp(i) { employees.splice(i, 1); save(); renderRoster(); }
-function clearAll() {
-  if (!employees.length) return;
-  if (confirm('Remove all ' + employees.length + ' employees from the roster?')) {
-    employees = []; save(); renderRoster(); showToast('Roster cleared');
-  }
+/* ── Merge helper (into local list only) ── */
+function mergeIntoLocal(names) {
+  mergeEmployees(); /* ensure employees is up-to-date */
+  const existing = new Set(employees.map(e => e.toLowerCase()));
+  let added = 0, dupes = 0;
+  names.forEach(raw => {
+    const name = raw.trim().replace(/\s+/g,' ');
+    if (!name) return;
+    if (existing.has(name.toLowerCase())) { dupes++; return; }
+    localEmployees.push(name);
+    existing.add(name.toLowerCase());
+    added++;
+  });
+  saveLocal();
+  renderRoster();
+  return { added, dupes };
 }
 
-/* ── Shuffle ── */
+/* ── Roster actions ── */
+function removeLocal(name) {
+  localEmployees = localEmployees.filter(n => n.toLowerCase() !== name.toLowerCase());
+  saveLocal();
+  renderRoster();
+}
+
+function clearAll() {
+  if (!employees.length) return;
+  const msg = sheetEmployees.length
+    ? `This will remove ${localEmployees.length} manually-added employee(s). Sheet employees will remain. Continue?`
+    : `Remove all ${localEmployees.length} employees?`;
+  if (!confirm(msg)) return;
+  localEmployees = [];
+  saveLocal();
+  renderRoster();
+  showToast('Manual entries cleared');
+}
+
+/* ── Shuffle (Fisher-Yates) ── */
 function setNum(n) {
   numTeams = n;
   document.querySelectorAll('.num-btn').forEach(b => b.classList.toggle('active', +b.textContent === n));
 }
 
 function fisherYatesShuffle(arr) {
-  const a = [...arr]; // copy to avoid mutating original
+  const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1)); // 0 ≤ j ≤ i
-    [a[i], a[j]] = [a[j], a[i]]; // swap
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
 
 function doShuffle() {
   const out = document.getElementById('shuffleOut');
+  mergeEmployees();
   if (!employees.length) { out.innerHTML = '<div class="warning-box">Add employees first.</div>'; return; }
   if (employees.length < numTeams) {
-    out.innerHTML = `<div class="warning-box">You have ${employees.length} employee${employees.length > 1 ? 's' : ''} but want ${numTeams} teams. Add more employees or reduce teams.</div>`;
+    out.innerHTML = `<div class="warning-box">You have ${employees.length} employee${employees.length > 1 ? 's' : ''} but want ${numTeams} teams. Add more employees or reduce the number of teams.</div>`;
     return;
   }
-  
   const shuffled = fisherYatesShuffle(employees);
-  const teams = Array.from({ length: numTeams }, () => []);
+  const teams    = Array.from({ length: numTeams }, () => []);
   shuffled.forEach((name, i) => teams[i % numTeams].push(name));
+
   out.innerHTML = `<div class="teams-grid">${teams.map((members, i) => {
     const p = PALETTES[i % PALETTES.length];
     return `<div class="team-card">
@@ -454,18 +655,25 @@ function doShuffle() {
         ${TEAM_NAMES[i]}
         <span class="team-count" style="color:${p.dot}">${members.length} members</span>
       </div>
-      <div class="team-members">${members.map(m => `<span class="member-pill" style="background:${p.pill};color:${p.pillText}">${esc(m)}</span>`).join('')}</div>
+      <div class="team-members">${members.map(m=>`<span class="member-pill" style="background:${p.pill};color:${p.pillText}">${esc(m)}</span>`).join('')}</div>
     </div>`;
   }).join('')}</div>`;
 }
 
-/* ── Tabs ── */
+/* ── Add tabs ── */
 function switchTab(tab) {
-  document.querySelectorAll('.mini-tab').forEach((t, i) => t.classList.toggle('active', ['single','paste','file'][i] === tab));
-  document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', ['panel-single','panel-paste','panel-file'][i] === 'panel-' + tab));
+  document.querySelectorAll('.mini-tab').forEach((t,i) => t.classList.toggle('active', ['single','paste','file'][i] === tab));
+  document.querySelectorAll('.tab-panel').forEach((p,i) => p.classList.toggle('active', ['panel-single','panel-paste','panel-file'][i] === 'panel-' + tab));
 }
 
-renderRoster();
+/* ── Boot ── */
+if (sheetUrl) {
+  document.getElementById('setupBanner').style.display = 'none';
+  document.getElementById('sourceBar').style.display   = 'flex';
+  loadFromSheet();
+} else {
+  renderRoster();
+}
 </script>
 </body>
 </html>
