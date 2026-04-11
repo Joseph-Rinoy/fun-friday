@@ -414,27 +414,56 @@ function fisherYatesShuffle(arr) {
 
 function doShuffle() {
   const out = document.getElementById('shuffleOut');
+  const btn = document.querySelector('.btn-shuffle');
+  
   mergeEmployees();
-  if (!employees.length) { out.innerHTML = '<div class="warning-box">Add employees first.</div>'; return; }
+  if (!employees.length) { 
+    out.innerHTML = '<div class="warning-box">Add employees first.</div>'; 
+    return; 
+  }
   if (employees.length < numTeams) {
     out.innerHTML = `<div class="warning-box">You have ${employees.length} employee${employees.length > 1 ? 's' : ''} but want ${numTeams} teams. Add more employees or reduce the number of teams.</div>`;
     return;
   }
-  const shuffled = fisherYatesShuffle(employees);
-  const teams    = Array.from({ length: numTeams }, () => []);
-  shuffled.forEach((name, i) => teams[i % numTeams].push(name));
 
-  out.innerHTML = `<div class="teams-grid">${teams.map((members, i) => {
-    const p = PALETTES[i % PALETTES.length];
-    return `<div class="team-card">
-      <div class="team-head" style="background:${p.head};color:${p.text}">
-        <div class="team-dot" style="background:${p.dot}"></div>
-        ${TEAM_NAMES[i]}
-        <span class="team-count" style="color:${p.dot}">${members.length} members</span>
-      </div>
-      <div class="team-members">${members.map(m=>`<span class="member-pill" style="background:${p.pill};color:${p.pillText}">${esc(m)}</span>`).join('')}</div>
-    </div>`;
-  }).join('')}</div>`;
+  // Magical Reveal state
+  if (btn) {
+    btn.classList.add('shuffling');
+    btn.innerHTML = '<span>✨ Casting Spells...</span>';
+  }
+
+  out.innerHTML = `
+    <div class="magic-loading">
+      <div class="magic-spinner"></div>
+      <p style="color: var(--text2); font-weight: 500;">Mixing the roster for ultimate balance...</p>
+    </div>
+  `;
+
+  setTimeout(() => {
+    if (btn) {
+      btn.classList.remove('shuffling');
+      btn.innerHTML = 'Shuffle Now ↻';
+    }
+
+    const shuffled = fisherYatesShuffle(employees);
+    const teams    = Array.from({ length: numTeams }, () => []);
+    shuffled.forEach((name, i) => teams[i % numTeams].push(name));
+
+    out.innerHTML = `<div class="teams-grid">${teams.map((members, i) => {
+      const p = PALETTES[i % PALETTES.length];
+      const teamName = i < TEAM_NAMES.length ? TEAM_NAMES[i] : `Team ${i + 1}`;
+      return `<div class="team-card reveal" style="animation-delay: ${i * 0.15}s">
+        <div class="team-head" style="background:${p.head};color:${p.text}">
+          <div class="team-dot" style="background:${p.dot}"></div>
+          ${teamName}
+          <span class="team-count" style="color:${p.dot}">${members.length} members</span>
+        </div>
+        <div class="team-members">
+          ${members.map((m, mi) => `<span class="member-pill" style="background:${p.pill};color:${p.pillText}; animation-delay: ${0.2 + (mi * 0.05)}s">${esc(m)}</span>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }, 2500);
 }
 
 /* ── Global Tabs ── */
