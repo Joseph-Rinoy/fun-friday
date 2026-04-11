@@ -81,6 +81,11 @@
       <div class="emp-grid" id="empGrid">
         <span class="empty-hint">Roster is empty.</span>
       </div>
+
+      <div id="excludedSection" class="excluded-section" style="display:none">
+        <div class="excluded-title">Excluded from Shuffle</div>
+        <div class="excluded-grid" id="excludedGrid"></div>
+      </div>
     </div>
   </div>
 
@@ -181,6 +186,12 @@ function handleRosterSearch(val) {
   renderRoster();
 }
 
+function undoExclude(name) {
+  excludedEmployees = excludedEmployees.filter(n => n.toLowerCase() !== name.toLowerCase());
+  saveExcluded();
+  renderRoster();
+}
+
 /* ── Roster render ── */
 function renderRoster() {
   mergeEmployees();
@@ -224,6 +235,22 @@ function renderRoster() {
       ${esc(name)}${badge}${removeBtn}
     </div>`;
   }).join('');
+
+  // Render excluded employees
+  const exclSec = document.getElementById('excludedSection');
+  const exclGrid = document.getElementById('excludedGrid');
+  
+  if (excludedEmployees.length > 0) {
+    exclSec.style.display = 'block';
+    exclGrid.innerHTML = excludedEmployees.map(name => `
+      <div class="excluded-chip">
+        ${esc(name)}
+        <button class="btn-restore" onclick="undoExclude('${esc(name).replace(/'/g,"\\'")}')" title="Restore">+</button>
+      </div>
+    `).join('');
+  } else {
+    exclSec.style.display = 'none';
+  }
 }
 
 function showSkeleton() {
