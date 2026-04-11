@@ -78,13 +78,18 @@
         <button class="btn-primary" onclick="quickAddAction()">Add</button>
       </div>
 
-      <div class="emp-grid" id="empGrid">
-        <span class="empty-hint">Roster is empty.</span>
-      </div>
-
-      <div id="excludedSection" class="excluded-section" style="display:none">
-        <div class="excluded-title">Excluded from Shuffle</div>
-        <div class="excluded-grid" id="excludedGrid"></div>
+      <div class="roster-split-view">
+        <div class="roster-col">
+          <div class="roster-col-title">Active Roster</div>
+          <div class="emp-grid" id="empGrid">
+            <span class="empty-hint">Roster is empty.</span>
+          </div>
+        </div>
+        
+        <div class="roster-col" id="excludedSection" style="display:none">
+          <div class="roster-col-title">Excluded People</div>
+          <div class="emp-grid" id="excludedGrid"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -241,13 +246,24 @@ function renderRoster() {
   const exclGrid = document.getElementById('excludedGrid');
   
   if (excludedEmployees.length > 0) {
-    exclSec.style.display = 'block';
-    exclGrid.innerHTML = excludedEmployees.map(name => `
-      <div class="excluded-chip">
-        ${esc(name)}
-        <button class="btn-restore" onclick="undoExclude('${esc(name).replace(/'/g,"\\'")}')" title="Restore">+</button>
-      </div>
-    `).join('');
+    exclSec.style.display = 'flex';
+    
+    const filteredExcluded = excludedEmployees.filter(name => 
+      name.toLowerCase().includes(rosterSearchQuery)
+    );
+
+    if (filteredExcluded.length > 0) {
+      exclGrid.innerHTML = filteredExcluded.map(name => `
+        <div class="excluded-chip">
+          <span>${esc(name)}</span>
+          <button class="btn-restore" onclick="undoExclude('${esc(name).replace(/'/g,"\\'")}')" title="Restore">+</button>
+        </div>
+      `).join('');
+    } else {
+      exclGrid.innerHTML = rosterSearchQuery 
+        ? '<span class="empty-hint">No matches.</span>' 
+        : '';
+    }
   } else {
     exclSec.style.display = 'none';
   }
