@@ -123,6 +123,32 @@
   .btn-primary:hover { background: #234a31; }
   .btn-primary:active { transform: scale(0.97); }
 
+  /* ── Tabs Bar ── */
+  .tabs-bar {
+    display: flex; gap: 4px; padding: 4px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 40px; margin-bottom: 2rem;
+    width: 100%; position: sticky; top: 1rem; z-index: 10;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 14px; border-radius: 35px; border: none; background: none;
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .tab-btn.active { background: var(--surface); color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+  .tab-badge { 
+    font-size: 10px; background: var(--accent-light); color: var(--accent);
+    padding: 1px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+  }
+
+  .main-panel { display: none; width: 100%; animation: fadeIn 0.3s ease; }
+  .main-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .shuffle-hero { text-align: center; padding: 1.5rem 0; }
+  .shuffle-summary { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; }
+  .shuffle-summary strong { color: var(--text); }
+
   /* ── Roster ── */
   .roster-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .count-badge { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
@@ -204,69 +230,88 @@
     <p>Split employees into random groups for activities</p>
   </header>
 
-  <!-- ── Google Sheet setup banner (shown until URL saved) ── -->
-  <div class="setup-banner" id="setupBanner">
-    <h2>⚙️ One-time setup — connect your Google Sheet</h2>
-    <ol class="setup-steps">
-      <li>Create a Google Sheet with employee names in <code>Column A</code>, one name per row (no header needed).</li>
-      <li>Click <strong>File → Share → Publish to web</strong>.</li>
-      <li>Choose your sheet name and select <code>Comma-separated values (.csv)</code>, then click <strong>Publish</strong>.</li>
-      <li>Copy the URL and paste it below.</li>
-    </ol>
-    <div class="url-row">
-      <input type="text" id="sheetUrlInput"
-        placeholder="https://docs.google.com/spreadsheets/d/…/pub?output=csv" />
-      <button class="btn-amber" onclick="saveSheetUrl()">Connect sheet</button>
+  <!-- ── Global Navigation ── -->
+  <nav class="tabs-bar">
+    <button class="tab-btn active" id="tab-shuffle" onclick="switchMainTab('shuffle')">
+      🎲 Shuffle
+    </button>
+    <button class="tab-btn" id="tab-roster" onclick="switchMainTab('roster')">
+      👥 Roster <span class="tab-badge" id="tabBadgeCount">0</span>
+    </button>
+    <button class="tab-btn" id="tab-settings" onclick="switchMainTab('settings')">
+      ⚙️ Setup
+    </button>
+  </nav>
+
+  <!-- ── Tab: SHUFFLE (Default) ── -->
+  <div id="panel-shuffle" class="main-panel active">
+    <div class="card">
+      <div class="shuffle-hero">
+        <div class="card-title">Randomize Teams</div>
+        <p class="shuffle-summary" id="shuffleSummary">Loading roster…</p>
+      </div>
+      <div class="controls-row">
+        <label>Number of teams:</label>
+        <div class="num-btns">
+          <button class="num-btn" onclick="setNum(2)">2</button>
+          <button class="num-btn" onclick="setNum(3)">3</button>
+          <button class="num-btn active" onclick="setNum(4)">4</button>
+          <button class="num-btn" onclick="setNum(5)">5</button>
+          <button class="num-btn" onclick="setNum(6)">6</button>
+        </div>
+        <button class="btn-shuffle" onclick="doShuffle()">Shuffle Now ↻</button>
+      </div>
+      <div id="shuffleOut">
+        <div class="shuffle-hint">Groups will appear here.</div>
+      </div>
     </div>
   </div>
 
-  <!-- ── Source status bar (shown after URL saved) ── -->
-  <div class="source-bar" id="sourceBar" style="display:none">
-    <div class="source-dot" id="sourceDot"></div>
-    <span class="source-label" id="sourceLabel">Not loaded yet</span>
-    <button class="btn-sm" onclick="loadFromSheet()">↻ Refresh</button>
-    <button class="btn-sm danger" onclick="changeSheet()">Change sheet</button>
+  <!-- ── Tab: ROSTER ── -->
+  <div id="panel-roster" class="main-panel">
+    <div class="card">
+      <div class="roster-header">
+        <div class="card-title" style="margin-bottom:0">Employee roster</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="count-badge" id="countBadge">0 employees</span>
+          <button class="btn-add-toggle" onclick="toggleQuickAdd()">+ Add manual</button>
+          <button class="btn-clear-all" onclick="clearAll()">Clear all</button>
+        </div>
+      </div>
+
+      <div class="quick-add-row" id="quickAddRow">
+        <input type="text" id="quickAddInput" placeholder="Enter name or paste list (A, B, C...)" 
+               onkeydown="if(event.key==='Enter') quickAddAction()" />
+        <button class="btn-primary" onclick="quickAddAction()">Add</button>
+      </div>
+
+      <div class="emp-grid" id="empGrid">
+        <span class="empty-hint">Roster is empty.</span>
+      </div>
+    </div>
   </div>
 
-  <!-- ── Roster ── -->
-  <div class="card">
-    <div class="roster-header">
-      <div class="card-title" style="margin-bottom:0">Employee roster</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <span class="count-badge" id="countBadge">0 employees</span>
-        <button class="btn-add-toggle" onclick="toggleQuickAdd()">+ Add manual</button>
-        <button class="btn-clear-all" onclick="clearAll()">Clear all</button>
+  <!-- ── Tab: SETTINGS ── -->
+  <div id="panel-settings" class="main-panel">
+    <!-- Google Sheet setup banner -->
+    <div class="setup-banner" id="setupBanner">
+      <h2>⚙️ Connect your Google Sheet</h2>
+      <ol class="setup-steps">
+        <li>Create a Google Sheet with employee names in <code>Column A</code>.</li>
+        <li>Click <strong>File → Share → Publish to web</strong> (CSV format).</li>
+        <li>Paste the URL below.</li>
+      </ol>
+      <div class="url-row">
+        <input type="text" id="sheetUrlInput" placeholder="Paste published CSV URL here..." />
+        <button class="btn-amber" onclick="saveSheetUrl()">Connect sheet</button>
       </div>
     </div>
 
-    <!-- Quick Add Row (Hidden by default) -->
-    <div class="quick-add-row" id="quickAddRow">
-      <input type="text" id="quickAddInput" placeholder="Enter name or paste list (A, B, C...)" 
-             onkeydown="if(event.key==='Enter') quickAddAction()" />
-      <button class="btn-primary" onclick="quickAddAction()">Add</button>
-    </div>
-
-    <div class="emp-grid" id="empGrid">
-      <span class="empty-hint">No employees yet — add some above or connect your Google Sheet.</span>
-    </div>
-  </div>
-
-  <!-- ── Shuffle ── -->
-  <div class="card">
-    <div class="card-title">Shuffle into teams</div>
-    <div class="controls-row">
-      <label>Number of teams:</label>
-      <div class="num-btns">
-        <button class="num-btn" onclick="setNum(2)">2</button>
-        <button class="num-btn" onclick="setNum(3)">3</button>
-        <button class="num-btn active" onclick="setNum(4)">4</button>
-        <button class="num-btn" onclick="setNum(5)">5</button>
-        <button class="num-btn" onclick="setNum(6)">6</button>
-      </div>
-      <button class="btn-shuffle" onclick="doShuffle()">Shuffle ↻</button>
-    </div>
-    <div id="shuffleOut">
-      <div class="shuffle-hint">Add employees above, then hit Shuffle.</div>
+    <div class="source-bar" id="sourceBar" style="display:none">
+      <div class="source-dot" id="sourceDot"></div>
+      <span class="source-label" id="sourceLabel">Not connected</span>
+      <button class="btn-sm" onclick="loadFromSheet()">↻ Refresh</button>
+      <button class="btn-sm danger" onclick="changeSheet()">Disconnect</button>
     </div>
   </div>
 
@@ -341,11 +386,17 @@ function showToast(msg, isErr) {
 function renderRoster() {
   mergeEmployees();
   const grid = document.getElementById('empGrid');
-  document.getElementById('countBadge').textContent =
-    employees.length + ' employee' + (employees.length !== 1 ? 's' : '');
+  const count = employees.length;
+  const countStr = count + ' employee' + (count !== 1 ? 's' : '');
+  
+  document.getElementById('countBadge').textContent = countStr;
+  document.getElementById('tabBadgeCount').textContent = count;
+  document.getElementById('shuffleSummary').innerHTML = count > 0 
+    ? `Ready to shuffle <strong>${countStr}</strong>.` 
+    : 'No employees found. Go to <strong>Setup</strong> or <strong>Roster</strong> to add some.';
 
-  if (!employees.length) {
-    grid.innerHTML = '<span class="empty-hint">No employees yet — add some above or connect your Google Sheet.</span>';
+  if (!count) {
+    grid.innerHTML = '<span class="empty-hint">Roster is empty. Connect a sheet or add guest names.</span>';
     return;
   }
 
@@ -598,7 +649,17 @@ function doShuffle() {
   }).join('')}</div>`;
 }
 
-/* ── Add tabs ── (Removed) */
+/* ── Global Tabs ── */
+function switchMainTab(tab) {
+  // Update Buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === 'tab-' + tab);
+  });
+  // Update Panels
+  document.querySelectorAll('.main-panel').forEach(p => {
+    p.classList.toggle('active', p.id === 'panel-' + tab);
+  });
+}
 
 /* ── Boot ── */
 if (sheetUrl) {
@@ -606,6 +667,8 @@ if (sheetUrl) {
   document.getElementById('sourceBar').style.display   = 'flex';
   loadFromSheet();
 } else {
+  // If no sheet, help the user by showing the settings tab first
+  switchMainTab('settings');
   renderRoster();
 }
 </script>
