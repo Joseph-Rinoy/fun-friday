@@ -67,6 +67,11 @@
         </div>
       </div>
 
+      <div class="search-wrapper" style="margin-bottom: 1.5rem;">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="rosterSearchInput" placeholder="Search employees..." oninput="handleRosterSearch(this.value)" />
+      </div>
+
       <div class="quick-add-row" id="quickAddRow">
         <input type="text" id="quickAddInput" placeholder="Enter name or paste list (A, B, C...)" 
                onkeydown="if(event.key==='Enter') quickAddAction()" />
@@ -136,6 +141,7 @@ let excludedEmployees = [];
 let employees      = [];
 let numTeams       = 4;
 let sheetUrl       = '';
+let rosterSearchQuery = '';
 
 /* ── Init ── */
 try { sheetUrl       = localStorage.getItem(SHEET_KEY)  || ''; } catch(e) {}
@@ -170,10 +176,21 @@ function showToast(msg, isErr) {
   el._t = setTimeout(() => { el.className = 'toast'; }, 2600);
 }
 
+function handleRosterSearch(val) {
+  rosterSearchQuery = val.toLowerCase().trim();
+  renderRoster();
+}
+
 /* ── Roster render ── */
 function renderRoster() {
   mergeEmployees();
   const grid = document.getElementById('empGrid');
+  
+  // Apply filtering
+  const filtered = employees.filter(name => 
+    name.toLowerCase().includes(rosterSearchQuery)
+  );
+
   const count = employees.length;
   const countStr = count + ' employee' + (count !== 1 ? 's' : '');
   
@@ -188,9 +205,14 @@ function renderRoster() {
     return;
   }
 
+  if (!filtered.length && rosterSearchQuery) {
+    grid.innerHTML = '<span class="empty-hint">No employees match your search.</span>';
+    return;
+  }
+
   const sheetSet = new Set(sheetEmployees.map(n => n.toLowerCase()));
 
-  grid.innerHTML = employees.map((name, i) => {
+  grid.innerHTML = filtered.map((name, i) => {
     const p = PALETTES[i % PALETTES.length];
     const fromSheet = sheetSet.has(name.toLowerCase());
     const removeBtn = `<button class="emp-remove" onclick="removeLocal('${esc(name).replace(/'/g,"\\'")}')">×</button>`;
