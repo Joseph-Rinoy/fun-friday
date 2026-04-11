@@ -449,7 +449,7 @@ function doShuffle() {
     const teams    = Array.from({ length: numTeams }, () => []);
     shuffled.forEach((name, i) => teams[i % numTeams].push(name));
 
-    out.innerHTML = `<div class="teams-grid">${teams.map((members, i) => {
+    const resultsHtml = teams.map((members, i) => {
       const p = PALETTES[i % PALETTES.length];
       const teamName = i < TEAM_NAMES.length ? TEAM_NAMES[i] : `Team ${i + 1}`;
       return `<div class="team-card reveal" style="animation-delay: ${i * 0.15}s">
@@ -462,8 +462,61 @@ function doShuffle() {
           ${members.map((m, mi) => `<span class="member-pill" style="background:${p.pill};color:${p.pillText}; animation-delay: ${0.2 + (mi * 0.05)}s">${esc(m)}</span>`).join('')}
         </div>
       </div>`;
-    }).join('')}</div>`;
+    }).join('');
+
+    out.innerHTML = `
+      <div class="btn-copy-reveal">
+        <button class="btn-copy-all" onclick="copyResults()">
+          <span>📋</span> Copy All Teams
+        </button>
+      </div>
+      <div class="teams-grid">${resultsHtml}</div>
+    `;
+
+    // Confetti Celebration!
+    if (typeof confetti === 'function') {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+    }
   }, 2500);
+}
+
+/* ── Copy Results ── */
+function copyResults() {
+  const teamsGrid = document.querySelector('.teams-grid');
+  if (!teamsGrid) return;
+  
+  let text = "🎮 Qubiqon Team Randomizer Results\n\n";
+  const cards = teamsGrid.querySelectorAll('.team-card');
+  
+  cards.forEach(card => {
+    const head = card.querySelector('.team-head');
+    const name = head.innerText.replace(/\n.*/g, '').trim(); // Get only team name
+    const members = Array.from(card.querySelectorAll('.member-pill')).map(p => p.innerText.trim());
+    text += `📍 ${name}\n`;
+    text += members.map(m => ` • ${m}`).join('\n') + "\n\n";
+  });
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Teams copied to clipboard! 📋');
+  }).catch(err => {
+    showToast('Failed to copy', true);
+  });
 }
 
 /* ── Global Tabs ── */
@@ -489,5 +542,6 @@ if (sheetUrl) {
   renderRoster();
 }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </body>
 </html>

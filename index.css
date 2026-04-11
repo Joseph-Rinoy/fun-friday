@@ -301,6 +301,25 @@ button { font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; bord
 
 footer { margin-top: 3rem; font-size: 13px; color: var(--text3); text-align: center; line-height: 1.8; padding-bottom: 2rem; }
 
+.btn-copy-reveal {
+  display: flex; justify-content: flex-end; margin-bottom: 1.5rem; 
+  animation: fadeIn 0.5s ease both; animation-delay: 0.8s;
+}
+
+.btn-copy-all {
+  background: var(--accent); color: #fff; padding: 10px 20px; 
+  border: none; border-radius: 30px; display: flex; 
+  align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+  font-weight: 700; transition: all 0.2s ease;
+}
+
+.btn-copy-all:hover {
+  background: var(--accent-dark); transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3);
+}
+
+.btn-copy-all:active { transform: scale(0.95); }
+
 @media (max-width: 600px) {
   body { padding: 2rem 1rem 4rem; }
   header h1 { font-size: 26px; }
