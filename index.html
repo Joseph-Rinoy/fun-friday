@@ -473,7 +473,11 @@ async function fetchWithTimeout(url, ms) {
   const ctrl = new AbortController();
   const tid  = setTimeout(() => ctrl.abort(), ms);
   try {
-    const res = await fetch(url, { signal: ctrl.signal });
+    const res = await fetch(url, { 
+      signal: ctrl.signal,
+      cache: 'no-store',
+      headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+    });
     clearTimeout(tid);
     return res;
   } catch(e) {
@@ -490,6 +494,9 @@ async function loadFromSheet() {
   showSkeleton();
 
   /* ordered list of CORS proxies — tried one by one until one works */
+  const cacheBust = `&t=${Date.now()}`;
+  const bustedUrl = sheetUrl.includes('?') ? sheetUrl + cacheBust : sheetUrl + '?' + cacheBust;
+
   const proxies = [
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
@@ -501,7 +508,7 @@ async function loadFromSheet() {
   let lastErr = '';
 
   for (let i = 0; i < proxies.length; i++) {
-    const proxyUrl = proxies[i](sheetUrl);
+    const proxyUrl = proxies[i](bustedUrl);
     label.innerHTML = `Trying proxy ${i + 1} of ${proxies.length}…`;
     try {
       const res = await fetchWithTimeout(proxyUrl, 8000); /* 8 s per proxy */
